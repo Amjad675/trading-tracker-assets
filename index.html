@@ -1905,7 +1905,7 @@
       $('saveWithdrawalBtn').disabled = true;
 
       try {
-        appState = await apiCall('addWithdrawal', payload);
+        appState = await api('addWithdrawal', payload);
         renderState();
         calculate();
 
