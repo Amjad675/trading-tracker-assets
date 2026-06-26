@@ -14,7 +14,7 @@
   <meta name="theme-color" content="#111827">
   <link rel="manifest" href="./manifest.webmanifest">
   <title>Trading Tracker & Journal</title>
-  <!-- version: privacy-icon-power-update-journal-fix -->
+  <!-- version: cached-fast-load-withdrawal-fix -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
@@ -1221,6 +1221,50 @@
       localStorage.removeItem('tt_session_email');
     }
 
+    function saveCachedState(state) {
+      if (!state || !state.stats || !state.settings) return;
+
+      try {
+        localStorage.setItem('tt_cached_state', JSON.stringify({
+          savedAt: Date.now(),
+          userEmail: authState.userEmail || '',
+          state: state
+        }));
+      } catch (err) {
+        // Local storage can fail in private browsing or if storage is full.
+        // The app should still work normally without cache.
+      }
+    }
+
+    function loadCachedState() {
+      try {
+        const cached = JSON.parse(localStorage.getItem('tt_cached_state') || 'null');
+
+        if (!cached || !cached.state || !cached.state.stats || !cached.state.settings) {
+          return false;
+        }
+
+        if (cached.userEmail && authState.userEmail && cached.userEmail !== authState.userEmail) {
+          return false;
+        }
+
+        appState = cached.state;
+        renderState();
+        calculate();
+
+        const minutesOld = Math.max(0, Math.round((Date.now() - Number(cached.savedAt || 0)) / 60000));
+        setSync(minutesOld <= 1 ? 'Cached' : `Cached ${minutesOld}m`);
+
+        return true;
+      } catch (err) {
+        return false;
+      }
+    }
+
+    function clearCachedState() {
+      localStorage.removeItem('tt_cached_state');
+    }
+
     function api(action, params = {}) {
       return new Promise((resolve, reject) => {
         if (!CONFIG.API_URL || CONFIG.API_URL.includes('PASTE_YOUR')) {
@@ -1286,7 +1330,8 @@
 
       if (hasValidLocalSession()) {
         showApp();
-        loadApp();
+        const usedCache = loadCachedState();
+        loadApp({ background: usedCache });
       } else {
         clearSession();
         showAuth('Sign in once. You will stay signed in for 30 days unless you tap Sign out.');
@@ -1334,9 +1379,11 @@
 
           if (data.state) {
             appState = data.state;
+            saveCachedState(appState);
             renderState();
             calculate();
             setSync('Synced');
+            loadJournalPage({ resetPage: true, background: true });
           } else {
             loadApp();
           }
@@ -1367,6 +1414,7 @@
       }
 
       clearSession();
+      clearCachedState();
 
       if (window.google && google.accounts && google.accounts.id) {
         google.accounts.id.disableAutoSelect();
@@ -1425,18 +1473,29 @@
       }
     }
 
-    function loadApp() {
-      setSync('Loading');
+    function loadApp(options = {}) {
+      const background = !!options.background;
+
+      setSync(background ? 'Syncing' : 'Loading');
 
       api('initApp')
         .then((state) => {
           appState = state;
+          saveCachedState(appState);
           renderState();
           calculate();
           setSync('Synced');
           loadJournalPage({ resetPage: true, background: true });
         })
-        .catch(fail);
+        .catch((err) => {
+          if (background && appState) {
+            setSync('Cached');
+            toast('Using cached data. Sync failed.');
+            return;
+          }
+
+          fail(err);
+        });
     }
 
 
@@ -1793,6 +1852,7 @@
       const wasEditing = !!editingTradeRow;
 
       appState = state;
+      saveCachedState(appState);
       renderState();
       calculate();
       resetTradeForm();
@@ -1855,6 +1915,7 @@
       api('deleteTrade', { row: row })
         .then((state) => {
           appState = state;
+          saveCachedState(appState);
           renderState();
           calculate();
 
@@ -1906,6 +1967,7 @@
 
       try {
         appState = await api('addWithdrawal', payload);
+        saveCachedState(appState);
         renderState();
         calculate();
 
@@ -1933,6 +1995,7 @@
       api('saveSettings', payload)
         .then((state) => {
           appState = state;
+          saveCachedState(appState);
           renderState();
           calculate();
 
@@ -1993,6 +2056,7 @@
       api('clearAllData', { pin: pin })
         .then((state) => {
           appState = state;
+          saveCachedState(appState);
           renderState();
           calculate();
           resetTradeForm();
