@@ -14,7 +14,7 @@
   <meta name="theme-color" content="#111827">
   <link rel="manifest" href="./manifest.webmanifest">
   <title>Trading Tracker & Journal</title>
-  <!-- version: tp-buttons-beside-field -->
+  <!-- version: leverage-margin-restored -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
@@ -950,6 +950,21 @@
       }
     }
 
+
+    .results.three-results {
+      grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 390px) {
+      .results.three-results {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .results.three-results .result:first-child {
+        grid-column: 1 / -1;
+      }
+    }
+
   </style>
 </head>
 
@@ -1051,24 +1066,29 @@
         </div>
       </div>
 
-      <div class="tp-inline">
+      <div class="grid2">
         <div class="field">
           <label for="takeProfit">Take Profit</label>
           <input id="takeProfit" inputmode="decimal" type="number" step="any" placeholder="0.00">
         </div>
 
-        <div class="tp-mini-actions" aria-label="Take profit shortcuts">
-          <button class="btn ghost small" data-tp-multiple="1" type="button">1R</button>
-          <button class="btn ghost small" data-tp-multiple="2" type="button">2R</button>
+        <div class="field">
+          <label for="leverage">Leverage</label>
+          <input id="leverage" inputmode="decimal" type="number" step="any" value="5" placeholder="5">
         </div>
       </div>
 
       <div class="warning" id="calcWarning"></div>
 
-      <div class="results">
+      <div class="results three-results">
         <div class="result">
           <span>Position Size</span>
           <strong id="outPosition">$0.00</strong>
+        </div>
+
+        <div class="result">
+          <span>Margin Required</span>
+          <strong id="outMargin">$0.00</strong>
         </div>
 
         <div class="result">
@@ -1716,6 +1736,7 @@
       const entry = num($('entry').value);
       const sl = num($('stopLoss').value);
       const tp = num($('takeProfit').value);
+      const lev = num($('leverage').value);
 
       const balance = appState.stats.currentBalance;
       const fullRiskDollars = Math.round(Number(appState.stats.riskDollars || 0));
@@ -1725,12 +1746,13 @@
       let stopPctValue = 0;
       let tpPctValue = 0;
       let positionSize = 0;
+      let marginRequired = 0;
       let potentialProfit = 0;
       let potentialR = 0;
 
-      if (!entry || !sl || !tp) {
-        warning = 'Enter Entry, Stop Loss, and Take Profit to calculate.';
-      } else if (entry <= 0 || sl <= 0 || tp <= 0) {
+      if (!entry || !sl || !tp || !lev) {
+        warning = 'Enter Entry, Stop Loss, Take Profit, and Leverage to calculate.';
+      } else if (entry <= 0 || sl <= 0 || tp <= 0 || lev <= 0) {
         warning = 'All calculator numbers must be greater than zero.';
       } else if (direction === 'LONG' && !(sl < entry && tp > entry)) {
         warning = 'For a LONG, Stop Loss must be below Entry and Take Profit must be above Entry.';
@@ -1740,11 +1762,12 @@
         stopPctValue = direction === 'LONG' ? (entry - sl) / entry : (sl - entry) / entry;
         tpPctValue = direction === 'LONG' ? (tp - entry) / entry : (entry - tp) / entry;
         positionSize = effectiveRiskDollars / stopPctValue;
+        marginRequired = positionSize / lev;
         potentialProfit = positionSize * tpPctValue;
         potentialR = effectiveRiskDollars ? potentialProfit / effectiveRiskDollars : 0;
 
-        if (positionSize > balance * 20) {
-          warning = 'This setup creates a very large position size. Double-check Entry and Stop Loss.';
+        if (marginRequired > balance) {
+          warning = 'Margin required is higher than your current balance. That setup may be too large.';
         }
       }
 
@@ -1752,62 +1775,27 @@
       $('calcWarning').classList.toggle('show', !!warning);
 
       $('outPosition').textContent = money(positionSize);
+      $('outMargin').textContent = money(marginRequired);
       $('outPotentialR').textContent = rfmt(potentialR);
 
       lastCalc = {
-        valid: !warning || warning.startsWith('This setup creates'),
+        valid: !warning || warning.startsWith('Margin required'),
         direction: direction,
         entry: entry,
         stopLoss: sl,
         takeProfit: tp,
+        leverage: lev,
         balance: balance,
         fullRiskDollars: fullRiskDollars,
         riskMultiple: tradeRiskMultiple,
         riskDollars: effectiveRiskDollars,
         stopPct: stopPctValue,
         positionSize: positionSize,
+        marginRequired: marginRequired,
         tpPct: tpPctValue,
         potentialProfit: potentialProfit,
         potentialR: potentialR
       };
-    }
-
-    function setTPMultiple(multiple) {
-      const entry = num($('entry').value);
-      const sl = num($('stopLoss').value);
-      const rMultiple = Number(multiple || 1);
-
-      if (!entry || !sl || entry <= 0 || sl <= 0) {
-        toast('Enter Entry and Stop Loss first.');
-        return;
-      }
-
-      let tp = null;
-
-      if (direction === 'LONG') {
-        if (sl >= entry) {
-          toast('For a long, Stop Loss must be below Entry.');
-          return;
-        }
-
-        tp = entry + ((entry - sl) * rMultiple);
-      } else {
-        if (sl <= entry) {
-          toast('For a short, Stop Loss must be above Entry.');
-          return;
-        }
-
-        tp = entry - ((sl - entry) * rMultiple);
-
-        if (tp <= 0) {
-          toast('That TP would be below zero. Check your numbers.');
-          return;
-        }
-      }
-
-      $('takeProfit').value = formatPrice(tp);
-      calculate();
-      toast(`Take Profit set to ${rMultiple}R.`);
     }
 
     function formatPrice(value) {
@@ -2155,7 +2143,7 @@
       });
     });
 
-    ['entry', 'stopLoss', 'takeProfit'].forEach(id => {
+    ['entry', 'stopLoss', 'takeProfit', 'leverage'].forEach(id => {
       $(id).addEventListener('input', calculate);
     });
 
@@ -2175,9 +2163,6 @@
 
     document.querySelectorAll('[data-risk-size]').forEach(btn => {
       btn.addEventListener('click', () => setTradeRiskSize(Number(btn.dataset.riskSize)));
-    });
-    document.querySelectorAll('[data-tp-multiple]').forEach(btn => {
-      btn.addEventListener('click', () => setTPMultiple(Number(btn.dataset.tpMultiple)));
     });
     $('saveTradeBtn').addEventListener('click', saveTrade);
     $('cancelEditBtn').addEventListener('click', resetTradeForm);
