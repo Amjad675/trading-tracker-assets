@@ -14,7 +14,7 @@
   <meta name="theme-color" content="#111827">
   <link rel="manifest" href="./manifest.webmanifest">
   <title>Trading Tracker & Journal</title>
-  <!-- version: cached-fast-load-withdrawal-fix -->
+  <!-- version: simplified-calculator-risk-size -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
@@ -880,6 +880,37 @@
       display: block;
     }
 
+
+    .risk-size-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin: 0 0 12px;
+    }
+
+    .risk-size-btn {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      min-height: 50px;
+      font-weight: 950;
+      font-size: 15px;
+    }
+
+    .risk-size-btn.active {
+      background: linear-gradient(135deg, #facc15, #38f5a5);
+      color: #111827;
+      box-shadow: 0 12px 28px rgba(56, 245, 165, .16);
+    }
+
+    .calc-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+      margin: 8px 2px 12px;
+    }
+
   </style>
 </head>
 
@@ -901,9 +932,7 @@
       </div>
 
       <div class="top-actions">
-        <div class="top-actions">
         <div class="sync-pill" id="syncStatus">Loading</div>
-      </div>
         <button class="signout-pill icon-btn" id="signOutBtn" type="button" aria-label="Sign out" title="Sign out"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 3V12" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/>
           <path d="M6.35 6.35C4.9 7.8 4 9.8 4 12C4 16.42 7.58 20 12 20C16.42 20 20 16.42 20 12C20 9.8 19.1 7.8 17.65 6.35" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
@@ -941,11 +970,10 @@
       </div>
     </section>
 
-    <nav class="tabs four-tabs">
+    <nav class="tabs">
       <button class="tab active" data-tab="calculator">Calculator</button>
       <button class="tab" data-tab="journal">Journal</button>
       <button class="tab" data-tab="withdrawals">Withdrawals</button>
-      <button class="tab" data-tab="settings">Settings</button>
     </nav>
 
     <section class="card active" id="calculator">
@@ -961,6 +989,17 @@
         <button class="dir-btn" data-dir="SHORT">Short</button>
       </div>
 
+      <label>Trade Risk Size</label>
+      <div class="risk-size-actions">
+        <button class="risk-size-btn active" data-risk-size="1" type="button">1R</button>
+        <button class="risk-size-btn" data-risk-size="0.75" type="button">0.75R</button>
+        <button class="risk-size-btn" data-risk-size="0.5" type="button">0.5R</button>
+      </div>
+
+      <p class="calc-note">
+        This changes the calculator risk size only. The full monthly Risk / Trade amount at the top stays unchanged.
+      </p>
+
       <div class="grid2">
         <div class="field">
           <label for="entry">Entry</label>
@@ -973,50 +1012,17 @@
         </div>
       </div>
 
-      <div class="grid2">
-        <div class="field">
-          <label for="takeProfit">Take Profit</label>
-          <input id="takeProfit" inputmode="decimal" type="number" step="any" placeholder="0.00">
-        </div>
-
-        <div class="field">
-          <label for="leverage">Leverage</label>
-          <input id="leverage" inputmode="decimal" type="number" step="any" value="5" placeholder="5">
-        </div>
-      </div>
-
-      <div class="tp-actions">
-        <button class="btn ghost small" data-r-multiple="1" type="button">1R TP</button>
-        <button class="btn ghost small" data-r-multiple="2" type="button">2R TP</button>
-        <button class="btn ghost small" data-r-multiple="3" type="button">3R TP</button>
+      <div class="field">
+        <label for="takeProfit">Take Profit</label>
+        <input id="takeProfit" inputmode="decimal" type="number" step="any" placeholder="0.00">
       </div>
 
       <div class="warning" id="calcWarning"></div>
 
       <div class="results">
         <div class="result">
-          <span>Dollar Risk</span>
-          <strong id="outRisk">$0.00</strong>
-        </div>
-
-        <div class="result">
-          <span>Stop Distance</span>
-          <strong id="outStopPct">0.00%</strong>
-        </div>
-
-        <div class="result">
           <span>Position Size</span>
           <strong id="outPosition">$0.00</strong>
-        </div>
-
-        <div class="result">
-          <span>Margin Required</span>
-          <strong id="outMargin">$0.00</strong>
-        </div>
-
-        <div class="result">
-          <span>Potential Profit</span>
-          <strong id="outProfit">$0.00</strong>
         </div>
 
         <div class="result">
@@ -1024,7 +1030,6 @@
           <strong id="outPotentialR">0.00R</strong>
         </div>
       </div>
-
     </section>
 
     <section class="card" id="journal">
@@ -1052,11 +1057,22 @@
         <button class="sign-btn" id="lossBtn" data-pnl-sign="-1" type="button">Loss</button>
       </div>
 
+      <label>Trade Risk Size</label>
+      <div class="risk-size-actions">
+        <button class="risk-size-btn active" data-risk-size="1" type="button">1R</button>
+        <button class="risk-size-btn" data-risk-size="0.75" type="button">0.75R</button>
+        <button class="risk-size-btn" data-risk-size="0.5" type="button">0.5R</button>
+      </div>
+
+      <p class="small-note">
+        Default is 1R. Use 0.75R or 0.5R when you intentionally risk less on a trade.
+      </p>
+
       <button class="btn" id="saveTradeBtn">Save Closed Trade</button>
       <button class="btn ghost" id="cancelEditBtn" style="display:none">Cancel Edit</button>
 
       <p class="small-note">
-        Enter the amount, then choose Profit or Loss. Realized R is calculated automatically: Profit/Loss ÷ Risk Used.
+        Enter the amount, choose Profit or Loss, then select the risk size if this was not a full 1R trade.
       </p>
 
       <div class="section-title" style="margin-top:22px">
@@ -1106,31 +1122,6 @@
       <div class="list" id="withdrawalList"></div>
     </section>
 
-    <section class="card" id="settings">
-      <div class="section-title">
-        <h2>Account Settings</h2>
-        <span>Sheet-backed</span>
-      </div>
-
-      <div class="field">
-        <label for="startingBalance">Starting Balance</label>
-        <input id="startingBalance" inputmode="decimal" type="number" step="any" placeholder="710">
-      </div>
-
-      <div class="field">
-        <label for="riskPct">Risk Per Trade %</label>
-        <input id="riskPct" inputmode="decimal" type="number" step="any" placeholder="7">
-      </div>
-
-      <button class="btn" id="saveSettingsBtn">Save Settings</button>
-      <p class="small-note">Risk is based on the balance at the start of each month, not the changing balance during the month.</p>
-
-      <div style="height:18px"></div>
-
-      <button class="btn danger" id="clearDataBtn">Clear Journal Data</button>
-      <p class="small-note">This clears closed trades only. Your starting balance and risk percentage stay untouched.</p>
-    </section>
-
     <div class="footer-space"></div>
   </main>
 
@@ -1171,6 +1162,7 @@
     let lastCalc = null;
     let editingTradeRow = null;
     let pnlSign = 1;
+    let tradeRiskMultiple = 1;
     let privacyMode = localStorage.getItem('tradingTrackerPrivacy') === '1';
     let tradePageState = {
       month: '',
@@ -1334,7 +1326,7 @@
         loadApp({ background: usedCache });
       } else {
         clearSession();
-        showAuth('Sign in once. You will stay signed in for 30 days unless you tap Sign out.');
+        showAuth('Sign in once. You will stay signed in for 30 days unless you tap the power icon.');
       }
     }
 
@@ -1544,9 +1536,6 @@
       $('totalR').textContent = sensitiveR(s.totalR);
       $('winRate').textContent = sensitivePct(s.winRate);
       $('calcBalanceHint').textContent = `Current: ${money(s.currentBalance)} • Month start: ${money(s.monthStartBalance || 0)}`;
-      $('startingBalance').value = appState.settings.startingBalance;
-      $('riskPct').value = (appState.settings.riskPct * 100).toFixed(2).replace(/\.00$/, '');
-
       if ($('withdrawalCount')) {
         const count = Number(s.withdrawalsCount || (appState.withdrawals ? appState.withdrawals.length : 0) || 0);
         $('withdrawalCount').textContent = `${count} withdrawal${count === 1 ? '' : 's'}`;
@@ -1631,7 +1620,7 @@
             <div>
               <h3>${escapeHtml(t.token)}</h3>
               <p>${escapeHtml(t.date)}</p>
-              <p>Risk used: ${money(t.riskUsed)} • Balance after: ${money(t.balanceAfter)}</p>
+              <p>Risk size: ${Number(t.riskMultiple || 1)}R • Risk used: ${money(t.riskUsed)} • Balance after: ${money(t.balanceAfter)}</p>
             </div>
 
             <div class="trade-money">
@@ -1681,22 +1670,21 @@
       const entry = num($('entry').value);
       const sl = num($('stopLoss').value);
       const tp = num($('takeProfit').value);
-      const lev = num($('leverage').value);
 
       const balance = appState.stats.currentBalance;
-      const riskDollars = Math.round(Number(appState.stats.riskDollars || 0));
+      const fullRiskDollars = Math.round(Number(appState.stats.riskDollars || 0));
+      const effectiveRiskDollars = Math.round(fullRiskDollars * tradeRiskMultiple);
 
       let warning = '';
       let stopPctValue = 0;
       let tpPctValue = 0;
       let positionSize = 0;
-      let marginRequired = 0;
       let potentialProfit = 0;
       let potentialR = 0;
 
-      if (!entry || !sl || !tp || !lev) {
-        warning = 'Enter Entry, Stop Loss, Take Profit, and Leverage to calculate.';
-      } else if (entry <= 0 || sl <= 0 || tp <= 0 || lev <= 0) {
+      if (!entry || !sl || !tp) {
+        warning = 'Enter Entry, Stop Loss, and Take Profit to calculate.';
+      } else if (entry <= 0 || sl <= 0 || tp <= 0) {
         warning = 'All calculator numbers must be greater than zero.';
       } else if (direction === 'LONG' && !(sl < entry && tp > entry)) {
         warning = 'For a LONG, Stop Loss must be below Entry and Take Profit must be above Entry.';
@@ -1705,80 +1693,37 @@
       } else {
         stopPctValue = direction === 'LONG' ? (entry - sl) / entry : (sl - entry) / entry;
         tpPctValue = direction === 'LONG' ? (tp - entry) / entry : (entry - tp) / entry;
-        positionSize = riskDollars / stopPctValue;
-        marginRequired = positionSize / lev;
+        positionSize = effectiveRiskDollars / stopPctValue;
         potentialProfit = positionSize * tpPctValue;
-        potentialR = riskDollars ? potentialProfit / riskDollars : 0;
+        potentialR = effectiveRiskDollars ? potentialProfit / effectiveRiskDollars : 0;
 
-        if (marginRequired > balance) {
-          warning = 'Margin required is higher than your current balance. That setup may be too large.';
+        if (positionSize > balance * 20) {
+          warning = 'This setup creates a very large position size. Double-check Entry and Stop Loss.';
         }
       }
 
       $('calcWarning').textContent = warning;
       $('calcWarning').classList.toggle('show', !!warning);
 
-      $('outRisk').textContent = money(riskDollars);
-      $('outStopPct').textContent = pct(stopPctValue);
       $('outPosition').textContent = money(positionSize);
-      $('outMargin').textContent = money(marginRequired);
-      $('outProfit').textContent = money(potentialProfit);
       $('outPotentialR').textContent = rfmt(potentialR);
 
       lastCalc = {
-        valid: !warning || warning.startsWith('Margin required'),
+        valid: !warning || warning.startsWith('This setup creates'),
         direction: direction,
         entry: entry,
         stopLoss: sl,
         takeProfit: tp,
-        leverage: lev,
         balance: balance,
-        riskDollars: riskDollars,
+        fullRiskDollars: fullRiskDollars,
+        riskMultiple: tradeRiskMultiple,
+        riskDollars: effectiveRiskDollars,
         stopPct: stopPctValue,
         positionSize: positionSize,
-        marginRequired: marginRequired,
         tpPct: tpPctValue,
         potentialProfit: potentialProfit,
         potentialR: potentialR
       };
-    }
-
-    function setRTPMultiple(multiple) {
-      const entry = num($('entry').value);
-      const sl = num($('stopLoss').value);
-      const rMultiple = Number(multiple || 1);
-
-      if (!entry || !sl || entry <= 0 || sl <= 0) {
-        toast('Enter Entry and Stop Loss first.');
-        return;
-      }
-
-      let tp = null;
-
-      if (direction === 'LONG') {
-        if (sl >= entry) {
-          toast('For a long, Stop Loss must be below Entry.');
-          return;
-        }
-
-        tp = entry + ((entry - sl) * rMultiple);
-      } else {
-        if (sl <= entry) {
-          toast('For a short, Stop Loss must be above Entry.');
-          return;
-        }
-
-        tp = entry - ((sl - entry) * rMultiple);
-
-        if (tp <= 0) {
-          toast('That TP would be below zero. Check your numbers.');
-          return;
-        }
-      }
-
-      $('takeProfit').value = formatPrice(tp);
-      calculate();
-      toast(`Take Profit set to ${rMultiple}R.`);
     }
 
     function formatPrice(value) {
@@ -1797,6 +1742,17 @@
       document.querySelectorAll('.sign-btn').forEach(btn => {
         btn.classList.toggle('active', Number(btn.dataset.pnlSign) === pnlSign);
       });
+    }
+
+    function setTradeRiskSize(value) {
+      const parsed = Number(value);
+      tradeRiskMultiple = [1, 0.75, 0.5].includes(parsed) ? parsed : 1;
+
+      document.querySelectorAll('[data-risk-size]').forEach(btn => {
+        btn.classList.toggle('active', Number(btn.dataset.riskSize) === tradeRiskMultiple);
+      });
+
+      calculate();
     }
 
     function getNormalizedPnl() {
@@ -1834,7 +1790,8 @@
       const payload = {
         row: editingTradeRow,
         token: token,
-        pnl: normalizedPnl
+        pnl: normalizedPnl,
+        riskMultiple: tradeRiskMultiple
       };
 
       setSync('Saving');
@@ -1884,6 +1841,7 @@
       $('pnl').value = Math.abs(Number(trade.pnl || 0));
 
       setPnlMode(Number(trade.pnl) < 0 ? -1 : 1);
+      setTradeRiskSize(Number(trade.riskMultiple || 1));
 
       $('saveTradeBtn').textContent = 'Update Closed Trade';
       $('cancelEditBtn').style.display = 'block';
@@ -1900,6 +1858,7 @@
       $('pnl').value = '';
 
       setPnlMode(1);
+      setTradeRiskSize(1);
 
       $('saveTradeBtn').textContent = 'Save Closed Trade';
       $('cancelEditBtn').style.display = 'none';
@@ -2112,7 +2071,7 @@
       });
     });
 
-    ['entry', 'stopLoss', 'takeProfit', 'leverage'].forEach(id => {
+    ['entry', 'stopLoss', 'takeProfit'].forEach(id => {
       $(id).addEventListener('input', calculate);
     });
 
@@ -2130,13 +2089,11 @@
       }
     });
 
-    document.querySelectorAll('[data-r-multiple]').forEach(btn => {
-      btn.addEventListener('click', () => setRTPMultiple(Number(btn.dataset.rMultiple)));
+    document.querySelectorAll('[data-risk-size]').forEach(btn => {
+      btn.addEventListener('click', () => setTradeRiskSize(Number(btn.dataset.riskSize)));
     });
     $('saveTradeBtn').addEventListener('click', saveTrade);
     $('cancelEditBtn').addEventListener('click', resetTradeForm);
-    $('saveSettingsBtn').addEventListener('click', saveSettings);
-    $('clearDataBtn').addEventListener('click', clearAllData);
     $('saveWithdrawalBtn').addEventListener('click', saveWithdrawal);
     $('privacyToggle').addEventListener('click', togglePrivacy);
     $('signOutBtn').addEventListener('click', signOut);
