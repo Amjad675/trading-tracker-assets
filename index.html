@@ -14,7 +14,7 @@
   <meta name="theme-color" content="#111827">
   <link rel="manifest" href="./manifest.webmanifest">
   <title>Trading Tracker & Journal</title>
-  <!-- version: tp-buttons-leverage-output -->
+  <!-- version: tp-1r-2r-3r-buttons -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
@@ -953,7 +953,7 @@
 
     .tp-row {
       display: grid;
-      grid-template-columns: 1fr 132px;
+      grid-template-columns: 1fr 162px;
       gap: 10px;
       align-items: end;
     }
@@ -964,7 +964,7 @@
 
     .tp-shortcuts {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 8px;
     }
 
@@ -1004,7 +1004,7 @@
 
     @media (max-width: 360px) {
       .tp-row {
-        grid-template-columns: 1fr 118px;
+        grid-template-columns: 1fr 142px;
         gap: 8px;
       }
 
@@ -1129,6 +1129,7 @@
         <div class="tp-shortcuts" aria-label="Take profit shortcuts">
           <button class="btn ghost small" data-tp-multiple="1" type="button">1R</button>
           <button class="btn ghost small" data-tp-multiple="2" type="button">2R</button>
+          <button class="btn ghost small" data-tp-multiple="3" type="button">3R</button>
         </div>
       </div>
 
