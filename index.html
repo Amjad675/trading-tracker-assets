@@ -14,7 +14,7 @@
   <meta name="theme-color" content="#111827">
   <link rel="manifest" href="./manifest.webmanifest">
   <title>Trading Tracker & Journal</title>
-  <!-- version: leverage-margin-restored -->
+  <!-- version: tp-buttons-leverage-output -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
@@ -951,18 +951,72 @@
     }
 
 
-    .results.three-results {
-      grid-template-columns: 1fr;
+    .tp-row {
+      display: grid;
+      grid-template-columns: 1fr 132px;
+      gap: 10px;
+      align-items: end;
     }
 
-    @media (min-width: 390px) {
-      .results.three-results {
-        grid-template-columns: 1fr 1fr;
+    .tp-row .field {
+      margin-bottom: 0;
+    }
+
+    .tp-shortcuts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .tp-shortcuts .btn {
+      min-height: 56px;
+      margin-top: 0;
+      padding: 0 6px;
+      font-size: 13px;
+      border-radius: 18px;
+    }
+
+    .leverage-output {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255,255,255,.10);
+      padding: 13px;
+      min-height: 76px;
+    }
+
+    .leverage-output label {
+      margin: 0 0 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .leverage-output input {
+      min-height: auto;
+      height: 28px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      padding: 0;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: -.035em;
+    }
+
+    @media (max-width: 360px) {
+      .tp-row {
+        grid-template-columns: 1fr 118px;
+        gap: 8px;
       }
 
-      .results.three-results .result:first-child {
-        grid-column: 1 / -1;
+      .tp-shortcuts .btn {
+        font-size: 12px;
+        padding: 0 4px;
       }
+    }
+
+
+    .results.three-results {
+      grid-template-columns: 1fr 1fr;
     }
 
   </style>
@@ -1066,15 +1120,15 @@
         </div>
       </div>
 
-      <div class="grid2">
+      <div class="tp-row">
         <div class="field">
           <label for="takeProfit">Take Profit</label>
           <input id="takeProfit" inputmode="decimal" type="number" step="any" placeholder="0.00">
         </div>
 
-        <div class="field">
-          <label for="leverage">Leverage</label>
-          <input id="leverage" inputmode="decimal" type="number" step="any" value="5" placeholder="5">
+        <div class="tp-shortcuts" aria-label="Take profit shortcuts">
+          <button class="btn ghost small" data-tp-multiple="1" type="button">1R</button>
+          <button class="btn ghost small" data-tp-multiple="2" type="button">2R</button>
         </div>
       </div>
 
@@ -1084,6 +1138,11 @@
         <div class="result">
           <span>Position Size</span>
           <strong id="outPosition">$0.00</strong>
+        </div>
+
+        <div class="leverage-output">
+          <label for="leverage">Leverage</label>
+          <input id="leverage" inputmode="decimal" type="number" step="any" value="5" placeholder="5">
         </div>
 
         <div class="result">
@@ -1798,6 +1857,44 @@
       };
     }
 
+    function setTPMultiple(multiple) {
+      const entry = num($('entry').value);
+      const sl = num($('stopLoss').value);
+      const rMultiple = Number(multiple || 1);
+
+      if (!entry || !sl || entry <= 0 || sl <= 0) {
+        toast('Enter Entry and Stop Loss first.');
+        return;
+      }
+
+      let tp = null;
+
+      if (direction === 'LONG') {
+        if (sl >= entry) {
+          toast('For a long, Stop Loss must be below Entry.');
+          return;
+        }
+
+        tp = entry + ((entry - sl) * rMultiple);
+      } else {
+        if (sl <= entry) {
+          toast('For a short, Stop Loss must be above Entry.');
+          return;
+        }
+
+        tp = entry - ((sl - entry) * rMultiple);
+
+        if (tp <= 0) {
+          toast('That TP would be below zero. Check your numbers.');
+          return;
+        }
+      }
+
+      $('takeProfit').value = formatPrice(tp);
+      calculate();
+      toast(`Take Profit set to ${rMultiple}R.`);
+    }
+
     function formatPrice(value) {
       const n = Number(value);
 
@@ -2163,6 +2260,9 @@
 
     document.querySelectorAll('[data-risk-size]').forEach(btn => {
       btn.addEventListener('click', () => setTradeRiskSize(Number(btn.dataset.riskSize)));
+    });
+    document.querySelectorAll('[data-tp-multiple]').forEach(btn => {
+      btn.addEventListener('click', () => setTPMultiple(Number(btn.dataset.tpMultiple)));
     });
     $('saveTradeBtn').addEventListener('click', saveTrade);
     $('cancelEditBtn').addEventListener('click', resetTradeForm);
