@@ -14,7 +14,7 @@
   <meta name="theme-color" content="#111827">
   <link rel="manifest" href="./manifest.webmanifest">
   <title>Trading Tracker & Journal</title>
-  <!-- version: dynamic-risk-loss-streak -->
+  <!-- version: signin-button-loading-state -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
@@ -1019,6 +1019,26 @@
       grid-template-columns: 1fr 1fr;
     }
 
+
+    #googleSignInBtn.disabled,
+    #googleSignInBtn[aria-disabled="true"] {
+      opacity: .6;
+      pointer-events: none;
+      filter: grayscale(.2);
+    }
+
+    .signin-loading-text {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+      display: none;
+    }
+
+    .signin-loading-text.show {
+      display: block;
+    }
+
   </style>
 </head>
 
@@ -1349,7 +1369,9 @@
           state: state
         }));
       } catch (err) {
-        // Local storage can fail in private browsing or if storage is full.
+        
+        setSigninLoading(false);
+// Local storage can fail in private browsing or if storage is full.
         // The app should still work normally without cache.
       }
     }
@@ -1375,7 +1397,9 @@
 
         return true;
       } catch (err) {
-        return false;
+        
+        setSigninLoading(false);
+return false;
       }
     }
 
@@ -1482,8 +1506,25 @@
       googleButtonRendered = true;
     }
 
+
+    function setSigninLoading(isLoading) {
+      const googleBtn = $('googleSignInBtn');
+      const loadingText = $('signinLoadingText');
+
+      if (googleBtn) {
+        googleBtn.classList.toggle('disabled', !!isLoading);
+        googleBtn.setAttribute('aria-disabled', isLoading ? 'true' : 'false');
+      }
+
+      if (loadingText) {
+        loadingText.classList.toggle('show', !!isLoading);
+      }
+    }
+
     function handleCredentialResponse(response) {
-      if (!response || !response.credential) {
+      
+      setSigninLoading(true);
+if (!response || !response.credential) {
         showAuth('Google sign-in failed. Try again.');
         return;
       }
@@ -1527,7 +1568,9 @@
     }
 
     function signOut() {
-      if (authState.sessionToken) {
+      
+      setSigninLoading(false);
+if (authState.sessionToken) {
         api('revokeSession').catch(() => {});
       }
 
@@ -2105,7 +2148,9 @@
         setSync('Synced');
         toast('Withdrawal saved.');
       } catch (err) {
-        fail(err);
+        
+        setSigninLoading(false);
+fail(err);
       } finally {
         $('saveWithdrawalBtn').disabled = false;
         hideScreenLoader();
