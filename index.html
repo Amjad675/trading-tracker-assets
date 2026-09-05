@@ -14,7 +14,7 @@
   <meta name="theme-color" content="#111827">
   <link rel="manifest" href="./manifest.webmanifest">
   <title>Trading Tracker & Journal</title>
-  <!-- version: signin-button-loading-state -->
+  <!-- version: month-start-risk-restored -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
@@ -1019,26 +1019,6 @@
       grid-template-columns: 1fr 1fr;
     }
 
-
-    #googleSignInBtn.disabled,
-    #googleSignInBtn[aria-disabled="true"] {
-      opacity: .6;
-      pointer-events: none;
-      filter: grayscale(.2);
-    }
-
-    .signin-loading-text {
-      margin-top: 10px;
-      color: var(--muted);
-      font-size: 13px;
-      text-align: center;
-      display: none;
-    }
-
-    .signin-loading-text.show {
-      display: block;
-    }
-
   </style>
 </head>
 
@@ -1125,7 +1105,7 @@
       </div>
 
       <p class="calc-note">
-        This changes the calculator risk size only. The top Risk / Trade amount shows the current 1R risk for the next trade.
+        This changes the calculator risk size only. Risk / Trade is based on the month-start portfolio balance.
       </p>
 
       <div class="grid2">
@@ -1369,9 +1349,7 @@
           state: state
         }));
       } catch (err) {
-        
-        setSigninLoading(false);
-// Local storage can fail in private browsing or if storage is full.
+        // Local storage can fail in private browsing or if storage is full.
         // The app should still work normally without cache.
       }
     }
@@ -1397,9 +1375,7 @@
 
         return true;
       } catch (err) {
-        
-        setSigninLoading(false);
-return false;
+        return false;
       }
     }
 
@@ -1506,25 +1482,8 @@ return false;
       googleButtonRendered = true;
     }
 
-
-    function setSigninLoading(isLoading) {
-      const googleBtn = $('googleSignInBtn');
-      const loadingText = $('signinLoadingText');
-
-      if (googleBtn) {
-        googleBtn.classList.toggle('disabled', !!isLoading);
-        googleBtn.setAttribute('aria-disabled', isLoading ? 'true' : 'false');
-      }
-
-      if (loadingText) {
-        loadingText.classList.toggle('show', !!isLoading);
-      }
-    }
-
     function handleCredentialResponse(response) {
-      
-      setSigninLoading(true);
-if (!response || !response.credential) {
+      if (!response || !response.credential) {
         showAuth('Google sign-in failed. Try again.');
         return;
       }
@@ -1568,9 +1527,7 @@ if (!response || !response.credential) {
     }
 
     function signOut() {
-      
-      setSigninLoading(false);
-if (authState.sessionToken) {
+      if (authState.sessionToken) {
         api('revokeSession').catch(() => {});
       }
 
@@ -2148,9 +2105,7 @@ if (authState.sessionToken) {
         setSync('Synced');
         toast('Withdrawal saved.');
       } catch (err) {
-        
-        setSigninLoading(false);
-fail(err);
+        fail(err);
       } finally {
         $('saveWithdrawalBtn').disabled = false;
         hideScreenLoader();
